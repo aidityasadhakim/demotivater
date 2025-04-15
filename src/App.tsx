@@ -1,35 +1,60 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
-import './App.css'
+import { useState, useEffect } from "react";
+import Header from "./components/Header";
+import Hero from "./components/Hero";
+import InputForm from "./components/InputForm";
+import ResponseDisplay from "./components/ResponseDisplay";
+import Footer from "./components/Footer";
+import { motivateUser } from "./ai/motivator";
 
-function App() {
-  const [count, setCount] = useState(0)
+const App = () => {
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [response, setResponse] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+
+  // Check for user's preferred color scheme
+  useEffect(() => {
+    const prefersDark = window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches;
+    setIsDarkMode(prefersDark);
+
+    if (prefersDark) {
+      document.documentElement.classList.add("dark");
+    }
+  }, []);
+
+  const handleToggleTheme = () => {
+    setIsDarkMode(!isDarkMode);
+    document.documentElement.classList.toggle("dark");
+  };
+
+  const handleSubmit = async (input: string) => {
+    setIsLoading(true);
+
+    try {
+      const response = await motivateUser(input);
+      console.log(response);
+      // setResponse(response);
+    } catch (error) {
+      console.error("Error motivating user:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+    <div className="min-h-screen flex flex-col bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-200">
+      <div className="container mx-auto px-4 flex flex-col min-h-screen">
+        <Header isDarkMode={isDarkMode} onToggleTheme={handleToggleTheme} />
+        <main className="flex-grow flex flex-col items-center justify-start py-8">
+          <Hero />
+          <InputForm onSubmit={handleSubmit} isLoading={isLoading} />
+          <ResponseDisplay response={response} />
+        </main>
+        <Footer />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+    </div>
+  );
+};
 
-export default App
+export default App;
